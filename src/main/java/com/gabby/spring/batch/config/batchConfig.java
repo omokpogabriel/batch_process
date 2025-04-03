@@ -19,6 +19,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.sql.SQLException;
+
 @Configuration
 @RequiredArgsConstructor
 public class batchConfig {
@@ -59,6 +61,11 @@ public class batchConfig {
                 .reader(itemReader())
                 .processor(processor())
                 .writer(writer())
+                .faultTolerant()
+                .retry(SQLException.class)
+                .retryLimit(1)
+                .skip(NumberFormatException.class)
+                .skipLimit(5)
                 .build();
     }
 
