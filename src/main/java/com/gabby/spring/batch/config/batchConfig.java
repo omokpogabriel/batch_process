@@ -8,6 +8,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
@@ -17,6 +18,7 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.sql.SQLException;
@@ -73,6 +75,7 @@ public class batchConfig {
     public Job runJob(){
         return new JobBuilder("importstudents", jobRepository)
                 .start(importStep())
+                .next(multiThreadedStep())
 //                .next()  if you have more than one steo
                 .build();
     }
@@ -92,4 +95,21 @@ public class batchConfig {
         return lineMapper;
 
     }
+
+
+
+    public MultiThreadedItemProcessor itemProcessor(){
+        return new MultiThreadedItemProcessor();
+    }
+    @Bean
+    public Step multiThreadedStep() {
+        return new StepBuilder("multiThreadedStep", jobRepository)
+                .<Student, Student>chunk(10, platformTransactionManager)
+                .reader(itemReader())
+                .processor(itemProcessor())
+                .writer(writer())
+                .taskExecutor(new SimpleAsyncTaskExecutor()) // Enables multithreading
+                .build();
+    }
+
 }
