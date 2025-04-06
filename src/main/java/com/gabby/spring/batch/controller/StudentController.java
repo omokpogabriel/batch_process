@@ -35,7 +35,7 @@ public class StudentController {
 
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("startAt", System.currentTimeMillis())
-                .addString("path", "src/main/resources/hello.xls")
+                .addString("path", filePath)
                 .toJobParameters();
 
         try {
