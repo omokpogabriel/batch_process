@@ -10,9 +10,12 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,10 +26,16 @@ public class StudentController {
     private final Job job;
 
     @PostMapping
-    public void importCsvToDbJob()  {
+    public void importCsvToDbJob() throws IOException {
+
+
+        String filePath = new ClassPathResource("hello.xls").getFile().getAbsolutePath(); // this can be done throught the
+        System.out.println(String.format("THIS IS A PATH %s",filePath));
+
 
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("startAt", System.currentTimeMillis())
+                .addString("path", "src/main/resources/hello.xls")
                 .toJobParameters();
 
         try {

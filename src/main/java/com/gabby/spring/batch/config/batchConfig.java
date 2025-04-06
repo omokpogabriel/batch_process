@@ -15,8 +15,10 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,7 +28,7 @@ import java.sql.SQLException;
 @Configuration
 @RequiredArgsConstructor
 public class batchConfig {
-
+/*
     private final JobRepository jobRepository;
     private final StudentRepository repository;
     private final PlatformTransactionManager platformTransactionManager;
@@ -43,12 +45,12 @@ public class batchConfig {
     }
 
     @Bean
-    public StudentProcessor processor(){
+    public StudentProcessor SingleProcessor(){
         return new StudentProcessor();
     }
 
     @Bean
-    public RepositoryItemWriter<Student> writer(){
+    public RepositoryItemWriter<Student> bWriter(){
         RepositoryItemWriter<Student> writer = new RepositoryItemWriter<>();
         writer.setRepository(repository);
         writer.setMethodName("save");
@@ -61,8 +63,8 @@ public class batchConfig {
         return new StepBuilder("csvImport", jobRepository)
                 .<Student, Student>chunk(1000, platformTransactionManager)
                 .reader(itemReader())
-                .processor(processor())
-                .writer(writer())
+                .processor(SingleProcessor())
+                .writer(bWriter())
                 .faultTolerant()
                 .retry(SQLException.class)
                 .retryLimit(1)
@@ -107,9 +109,9 @@ public class batchConfig {
                 .<Student, Student>chunk(10, platformTransactionManager)
                 .reader(itemReader())
                 .processor(itemProcessor())
-                .writer(writer())
+                .writer(bWriter())
                 .taskExecutor(new SimpleAsyncTaskExecutor()) // Enables multithreading
                 .build();
     }
-
+*/
 }
