@@ -1,6 +1,6 @@
 package com.gabby.spring.batch.config;
 
-import com.gabby.spring.batch.model.config.Student;
+import com.gabby.spring.batch.model.Student;
 import org.springframework.batch.item.ItemProcessor;
 
 public class MultiThreadedItemProcessor  implements ItemProcessor<Student, Student> {

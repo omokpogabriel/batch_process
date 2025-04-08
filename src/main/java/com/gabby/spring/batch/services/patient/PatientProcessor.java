@@ -15,7 +15,7 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
 
     @Override
     public Patient process(PatientDao row) throws Exception {
-        Optional<Patient> patients = patientRepository.findByCuid(row.getCuid());
+        Optional<Patient> patients = patientRepository.findByPuid(row.getPuid());
 
         if(patients.isPresent()){
             // you can throw an exception here if you so choose
@@ -23,10 +23,24 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
         }
 
         return Patient.builder()
-                .upi(row.getUpi())
-                .cuid(row.getCuid())
-                .firstname(row.getFirstname())
-                .lastname(row.getLastname())
+                .id(row.getId())
+                .title(row.getTitle())
+                .firstName(row.getFirstName())
+                .middleName(row.getMiddleName())
+                .lastName(row.getLastName())
+                .email(row.getEmail())
+                .phoneNumber(row.getPhoneNumber())
+                .puid(row.getPuid())
+                .passportPhotograph(row.getPassportPhotograph())
+                .dateOfBirth(row.getDateOfBirth())
+                .gender(row.getGender())
+                .whatsappNumber(row.getWhatsappNumber())
+                .status(row.getStatus())
+                .statusChangeReason(row.getStatusChangeReason())
+                .type(row.getType())
+                .organization(row.getOrganization())
+                .smarthealthId(row.getSmarthealthId())
+                .primaryLocation(row.getPrimaryLocation())
                 .build();
     }
 }

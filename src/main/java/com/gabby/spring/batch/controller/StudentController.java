@@ -29,7 +29,7 @@ public class StudentController {
     public void importCsvToDbJob() throws IOException {
 
 
-        String filePath = new ClassPathResource("hello.xls").getFile().getAbsolutePath(); // this can be done throught the
+        String filePath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
         System.out.println(String.format("THIS IS A PATH %s",filePath));
 
 
