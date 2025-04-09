@@ -16,7 +16,7 @@ import java.util.UUID;
 @Builder
 
 @Table(name = "patients", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"puid", "organization_id"}),
+//        @UniqueConstraint(columnNames = {"puid", "organization_id"}),
         @UniqueConstraint(columnNames = {"nickname"})
 })
 
@@ -67,8 +67,8 @@ public class Patient {
     @Column(nullable = false)
     private String type;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true )
+    @JoinColumn( name = "organization_id", nullable = true)
     private Organization organization;
 
     @Column(name = "smarthealth_id")

@@ -27,7 +27,7 @@ public class PatientDao {
     private Boolean status;
     private String statusChangeReason;
     private String type;
-    private Organization organization;
+    private String organizationId;
     private String smarthealthId;
     private String primaryLocation;
 }

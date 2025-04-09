@@ -1,10 +1,19 @@
 package com.gabby.spring.batch.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Entity
 @Table(name = "organizations", indexes = {@Index(name = "idx_organization_id", columnList = "id")})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Organization {
 
     @Id

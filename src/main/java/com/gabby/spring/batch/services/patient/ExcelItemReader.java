@@ -36,11 +36,11 @@ public class ExcelItemReader implements ItemReader<PatientDao>, StepExecutionLis
     public PatientDao read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
        if(delegateReader == null){
 
-//           JobParameters path = stepExecution.getJobParameters();
-//
-//           String filePath = path.getString("path");
+           JobParameters path = stepExecution.getJobParameters();
 
-           String filePath = new ClassPathResource("hello.xls").getFile().getAbsolutePath(); // this can be done throught the
+           String filePath = path.getString("path");
+
+//           String filePath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
            System.out.println(filePath);
 
            delegateReader = excelReaderFactory.createReader(filePath);
