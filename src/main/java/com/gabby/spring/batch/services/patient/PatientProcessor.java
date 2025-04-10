@@ -6,6 +6,7 @@ import com.gabby.spring.batch.model.Patient;
 import com.gabby.spring.batch.repository.OrganizationRepository;
 import com.gabby.spring.batch.repository.PatientRepository;
 import com.gabby.spring.batch.services.BatchProcessException;
+import com.gabby.spring.batch.services.OrganizationService;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -16,7 +17,7 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
     @Autowired
     private PatientRepository patientRepository;
     @Autowired
-    private OrganizationRepository organizationRepository;
+    private OrganizationService organizationService;
 
     @Override
     public Patient process(PatientDao row) throws Exception {
@@ -27,7 +28,7 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
             throw new BatchProcessException("The value already exists");
         }
 
-        var getOrganization = organizationRepository.findById( row.getOrganizationId());
+        var getOrganization = organizationService.findOrganizationById( row.getOrganizationId());
         Organization res;
 
         if(getOrganization.isEmpty() ){
@@ -40,7 +41,7 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
             org.setMobileNumber("49374837434");
             org.setOrganizationType("hospital");
 
-            res = organizationRepository.save(org);
+            res = organizationService.save(org);
         }else {
             res = getOrganization.get();
         }

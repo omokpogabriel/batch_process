@@ -2,6 +2,7 @@ package com.gabby.spring.batch.services.excel;
 
 import com.gabby.spring.batch.dao.PatientDao;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +13,10 @@ public class ExcelReaderFactory {
             return new ExcelXlsReader(filePath);
         } else if(filePath.endsWith(".xlsx")){
             return new ExcelXlsReader(filePath);
-        }else {
+        } else if(filePath.endsWith(".csv")){
+            return new ExcelCsvReader(filePath);
+        }
+        else {
             throw new IllegalArgumentException( String.format("Unsupported file type %s",filePath));
         }
     }

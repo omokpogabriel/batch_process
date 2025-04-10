@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @EnableScheduling
 public class ScheduleConfig {
 
-    @Bean
-    @Scheduled( initialDelay = 5000)
-    public void getGames( ){
-        System.out.println("THIS IS THE SCHEDULER");
-    }
+//    @Bean
+//    @Scheduled( initialDelay = 5000)
+//    public void getGames( ){
+//        System.out.println("THIS IS THE SCHEDULER");
+//    }
 }

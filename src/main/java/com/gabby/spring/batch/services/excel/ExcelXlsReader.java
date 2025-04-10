@@ -88,7 +88,6 @@ public class ExcelXlsReader implements ItemReader<PatientDao> {
 
     }
 
-
     private Boolean getStatus(Iterator<Cell> cellIterator) throws BatchProcessException {
 
         if( !cellIterator.hasNext()){

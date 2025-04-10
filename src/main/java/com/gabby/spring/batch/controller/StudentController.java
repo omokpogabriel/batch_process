@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,22 +46,15 @@ public class StudentController {
         if(fileFormatFinder.length < 1){
             throw new IllegalArgumentException("another error");
         }
-
         String fileFormat = '.' + fileFormatFinder[fileFormatFinder.length - 1];
 
-        if(!fileFormat.trim().equals(".xls") && !fileFormat.trim().equals(".xlsx")){
-            throw new IllegalArgumentException("filetype not accepted");
-        }
-
-          File tempFile = File.createTempFile("patient-file", fileFormat);
+          File tempFile = File.createTempFile("patients", fileFormat);
         System.out.println("the temp file"+ tempFile.getAbsolutePath());
           file.transferTo(tempFile);
 
-//        String filepath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
-
         JobParameters jobParameters = new JobParametersBuilder()
-//                .addLong("timestamp", System.nanoTime())
-                .addString("path", tempFile.getAbsolutePath())
+                .addString("run.id", UUID.randomUUID().toString())
+                .addString("filePath", tempFile.getAbsolutePath())
                 .toJobParameters();
 
         try {

@@ -1,34 +1,32 @@
 package com.gabby.spring.batch.config;
 
 import com.gabby.spring.batch.dao.PatientDao;
+import com.gabby.spring.batch.listener.JobCompletionListener;
 import com.gabby.spring.batch.model.Patient;
 import com.gabby.spring.batch.services.BatchProcessException;
+import com.gabby.spring.batch.services.excel.ExcelReaderFactory;
 import com.gabby.spring.batch.services.patient.ExcelItemReader;
 import com.gabby.spring.batch.services.patient.PatientProcessor;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.SkipListener;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.core.step.skip.SkipLimitExceededException;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.repeat.RepeatContext;
-import org.springframework.batch.repeat.exception.ExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.retry.RetryException;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.nio.file.FileAlreadyExistsException;
-import java.util.NoSuchElementException;
 
 @Configuration
 @EnableBatchProcessing
@@ -41,7 +39,14 @@ public class excelConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
-    private final ExcelItemReader excelItemReader;
+    private final ExcelReaderFactory excelReaderFactory;
+
+    @Bean
+    @StepScope
+    public ExcelItemReader excelItemReader(ExcelReaderFactory excelReaderFactory){
+        return new ExcelItemReader(excelReaderFactory);
+    }
+
 
     @Bean
     @Primary
@@ -59,26 +64,16 @@ public class excelConfig {
     @Bean
     @Primary
     public Step importexcelStep(){
-        System.out.println("THIS IS THE SKIP VALUE "+ skipLimitValue);
+
         return new StepBuilder("excelStep", jobRepository)
                 .<PatientDao, Patient>chunk(50, transactionManager)
-                .reader(excelItemReader) // we are not passing the location becuase of the JobLauncher args
+                .reader(excelItemReader(excelReaderFactory)) // we are not passing the location becuase of the JobLauncher args
                 .processor(processor())
                 .writer(writer(entityManagerFactory))
                 .faultTolerant()
-                .skip(ConstraintViolationException.class)
-                .skip(FileAlreadyExistsException.class)
-                .skip(NoSuchElementException.class)
-                .skip(BatchProcessException.class)
                 .skipLimit(skipLimitValue)
+                .skipPolicy(skipPolicy())
                 .retryLimit(0)
-//                .exceptionHandler(new ExceptionHandler() {
-//                    @Override
-//                    public void handleException(RepeatContext context, Throwable throwable) throws Throwable {
-////                        context.close();
-//                        System.out.println("THE EXCEPTION hANDLER READ " + throwable.getMessage());
-//                    }
-//                })
                 .listener(new SkipListener<PatientDao, Patient>() {
                     @Override
                     public void onSkipInRead(Throwable t) {
@@ -97,15 +92,56 @@ public class excelConfig {
                     }
                 })
 //                .exceptionHandler()
-//                .taskExecutor(new SimpleAsyncTaskExecutor())
+                .taskExecutor(taskExecutor())
                 .build();
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("async-batching");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public SkipPolicy skipPolicy(){
+
+        return new SkipPolicy() {
+            @Override
+            public boolean shouldSkip(Throwable t, long skipCount) throws SkipLimitExceededException {
+                if(t instanceof BatchProcessException){
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
     }
 
     @Bean
     @Primary
     public Job runJobs(){
+
             return new JobBuilder("excelJob", jobRepository)
                     .incrementer(new RunIdIncrementer())
+                    .listener(new JobExecutionListener() {
+                        @Override
+                        public void beforeJob(JobExecution jobExecution) {
+                            JobExecutionListener.super.beforeJob(jobExecution);
+                            System.out.println("THIS IS NICE");
+                        }
+
+                        @Override
+                        public void afterJob(JobExecution jobExecution) {
+                            JobExecutionListener.super.afterJob(jobExecution);
+                            System.out.println("THIS IS closed" + jobExecution.getStatus() + " " +jobExecution.getJobInstance().getJobName());
+                        }
+                    })
                     .start(importexcelStep())
                     .build();
     }

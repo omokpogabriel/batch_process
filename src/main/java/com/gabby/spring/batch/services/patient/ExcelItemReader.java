@@ -5,14 +5,11 @@ import com.gabby.spring.batch.services.excel.ExcelReaderFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.annotation.BeforeStep;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
+import org.springframework.batch.item.*;
 
-@Component
+import java.io.File;
+import java.io.FileNotFoundException;
+
 @RequiredArgsConstructor
 public class ExcelItemReader implements ItemReader<PatientDao>, StepExecutionListener {
 
@@ -28,6 +25,15 @@ public class ExcelItemReader implements ItemReader<PatientDao>, StepExecutionLis
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+
+        if (delegateReader instanceof ItemStream) {
+            try {
+                ((ItemStream) delegateReader).close();
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle closing exceptions
+            }
+        }
+
         return ExitStatus.COMPLETED;
     }
 
@@ -38,12 +44,14 @@ public class ExcelItemReader implements ItemReader<PatientDao>, StepExecutionLis
 
            JobParameters path = stepExecution.getJobParameters();
 
-           String filePath = path.getString("path");
-
-//           String filePath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
-           System.out.println(filePath);
+           String filePath = path.getString("filePath");
 
            delegateReader = excelReaderFactory.createReader(filePath);
+
+           if (delegateReader instanceof ItemStream) { // for filebase reading  the csv. the xls does not need this
+               ((ItemStream) delegateReader).open(new ExecutionContext());
+           }
+
        }
         return delegateReader.read();
     }

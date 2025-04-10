@@ -21,6 +21,10 @@ spring:
         enabled : false
   application:
     name: spring-batch
+  servlet:
+    multipart:
+      maxFileSize: 30MB
+      maxRequestSize: 30MB
 
 server:
   port: 9090
