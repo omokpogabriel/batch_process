@@ -11,10 +11,4 @@ public class SpringBatchApplication {
 		SpringApplication.run(SpringBatchApplication.class, args);
 	}
 
-	private ScheduleConfig scheduleConfig;
-
-	void CommandLineRunner(){
-		scheduleConfig.getGames();
-	}
-
 }

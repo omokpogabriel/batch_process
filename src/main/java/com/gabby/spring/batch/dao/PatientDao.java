@@ -1,11 +1,7 @@
 package com.gabby.spring.batch.dao;
 
-import com.gabby.spring.batch.model.Organization;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
-
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor

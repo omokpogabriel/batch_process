@@ -5,10 +5,10 @@ import com.gabby.spring.batch.model.Organization;
 import com.gabby.spring.batch.model.Patient;
 import com.gabby.spring.batch.repository.OrganizationRepository;
 import com.gabby.spring.batch.repository.PatientRepository;
+import com.gabby.spring.batch.services.BatchProcessException;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Optional;
 
 public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
@@ -24,7 +24,7 @@ public class PatientProcessor implements ItemProcessor<PatientDao, Patient> {
 
         if(patients.isPresent()){
             // you can throw an exception here if you so choose
-            throw new FileAlreadyExistsException("The value already exists");
+            throw new BatchProcessException("The value already exists");
         }
 
         var getOrganization = organizationRepository.findById( row.getOrganizationId());

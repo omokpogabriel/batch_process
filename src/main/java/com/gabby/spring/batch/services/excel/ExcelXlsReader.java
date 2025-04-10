@@ -2,16 +2,24 @@ package com.gabby.spring.batch.services.excel;
 
 import com.gabby.spring.batch.dao.PatientDao;
 import com.gabby.spring.batch.repository.OrganizationRepository;
+import com.gabby.spring.batch.services.BatchProcessException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.formula.FormulaParseException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 
 public class ExcelXlsReader implements ItemReader<PatientDao> {
@@ -28,8 +36,8 @@ public class ExcelXlsReader implements ItemReader<PatientDao> {
             Sheet sheet = workbook.getSheetAt(0);
             this.rowIterator = sheet.iterator();
 
-            var row1 = sheet.getRow(0).iterator();
-            while(!row1.hasNext()){
+            var row = sheet.getRow(0).iterator();
+            while(!row.hasNext()){
                 workbook.close();
                 throw new IllegalArgumentException("Invalid excel format");
             }
@@ -43,7 +51,7 @@ public class ExcelXlsReader implements ItemReader<PatientDao> {
 
 
     @Override
-    public PatientDao read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public PatientDao read() throws Exception {
        if(!rowIterator.hasNext()){
            workbook.close();
            return null;
@@ -51,63 +59,70 @@ public class ExcelXlsReader implements ItemReader<PatientDao> {
         Row row = rowIterator.next();
         PatientDao patientDao = new PatientDao();
         var res = row.iterator();
+            patientDao.setId( formatCell(res).getStringCellValue());
+            patientDao.setTitle( formatCell(res).getStringCellValue());
+            patientDao.setFirstName(formatCell(res).getStringCellValue());
+            patientDao.setMiddleName(formatCell(res).getStringCellValue());
+            patientDao.setLastName(formatCell(res).getStringCellValue());
+            patientDao.setEmail(formatCell(res).getStringCellValue());
+            patientDao.setPhoneNumber(formatCell(res).getStringCellValue());
+            patientDao.setPuid(formatCell(res).getStringCellValue());
+            patientDao.setPassportPhotograph(formatCell(res).getStringCellValue());
+            var dbo = formatCell(res);
+            if (dbo.getCellType() == CellType.NUMERIC) {
+                patientDao.setDateOfBirth(dbo.getLocalDateTimeCellValue());
+            } else {
+                patientDao.setDateOfBirth(LocalDateTime.parse(dbo.getStringCellValue()));
+            }
+            patientDao.setGender(formatCell(res).getStringCellValue());
+            patientDao.setWhatsappNumber(formatCell(res).getStringCellValue());
+            patientDao.setStatus( getStatus(res));
+            patientDao.setStatusChangeReason(formatCell(res).getStringCellValue());
+            patientDao.setType(formatCell(res).getStringCellValue());
+            patientDao.setOrganizationId(formatCell(res).getStringCellValue());
+            patientDao.setSmarthealthId(formatCell(res).getStringCellValue());
+            patientDao.setPrimaryLocation(formatCell(res).getStringCellValue());
 
-           patientDao.setId( formatCell(res.next()).getStringCellValue());
-           patientDao.setTitle( formatCell(res.next()).getStringCellValue());
-           patientDao.setFirstName(formatCell(res.next()).getStringCellValue());
-           patientDao.setMiddleName(formatCell(res.next()).getStringCellValue());
-           patientDao.setLastName(formatCell(res.next()).getStringCellValue());
-           patientDao.setEmail(formatCell(res.next()).getStringCellValue());
-           patientDao.setPhoneNumber(formatCell(res.next()).getStringCellValue());
-           patientDao.setPuid(formatCell(res.next()).getStringCellValue());
-           patientDao.setPassportPhotograph(formatCell(res.next()).getStringCellValue());
-           var dbo = formatCell(res.next());
-           if (dbo.getCellType() == CellType.NUMERIC) {
-               patientDao.setDateOfBirth(dbo.getLocalDateTimeCellValue());
-           } else {
-               patientDao.setDateOfBirth(LocalDateTime.parse(dbo.getStringCellValue()));
-           }
-           patientDao.setGender(formatCell(res.next()).getStringCellValue());
-           patientDao.setWhatsappNumber(formatCell(res.next()).getStringCellValue());
-           patientDao.setStatus( getStatus(res.next()));
-           patientDao.setStatusChangeReason(formatCell(res.next()).getStringCellValue());
-           patientDao.setType(formatCell(res.next()).getStringCellValue());
-           patientDao.setOrganizationId(formatCell(res.next()).getStringCellValue());
-           patientDao.setSmarthealthId(formatCell(res.next()).getStringCellValue());
-           patientDao.setPrimaryLocation(formatCell(res.next()).getStringCellValue());
 
            return patientDao;
 
-
-
     }
 
-    private Boolean getStatus(Cell cell){
-        if(cell.getCellType() == CellType.BOOLEAN){
-            return cell.getBooleanCellValue();
-        }else{
-            return Boolean.getBoolean(cell.getStringCellValue());
+
+    private Boolean getStatus(Iterator<Cell> cellIterator) throws BatchProcessException {
+
+        if( !cellIterator.hasNext()){
+            return false;
         }
+
+        Cell cell = cellIterator.next();
+        try{
+            if(cell.getCellType() == CellType.BOOLEAN){
+                return cell.getBooleanCellValue();
+            }else{
+                return Boolean.getBoolean(cell.getStringCellValue());
+            }
+        }catch (Exception ex) {
+            throw new BatchProcessException("Failed to read bool" + cell.getCellType());
+        }
+
     }
 
-    private Cell formatCell(Cell cell) throws Exception {
+    private Cell formatCell(Iterator<Cell> currentIterator) throws BatchProcessException {
+
+          if( !currentIterator.hasNext()){
+              return new EmptyCellTypeValue();
+          }
+
+          Cell cell = currentIterator.next();
         try {
             if (cell.getCellType() == CellType.BLANK || cell.getCellType() == CellType._NONE || cell.getCellType() == CellType.ERROR) {
-                cell.setCellValue("");
+                return new EmptyCellTypeValue();
             }
-
             return cell;
         } catch (Exception ex) {
-            System.out.println(
-                    String.format("THE EXCEPTION  cell type %s , the message %s the rowIndex %s the column index %s",
-                    cell.getCellType(),
-                    ex.getMessage(),
-                    cell.getRowIndex(),
-                    cell.getColumnIndex())
-            );
-            throw new Exception("Failed to read " + cell.getCellType());
+            throw new BatchProcessException("Failed to read " + cell.getCellType());
         }
     }
-
 
 }

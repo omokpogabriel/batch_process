@@ -13,9 +13,13 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,16 +30,37 @@ public class StudentController {
     private final Job job;
 
     @PostMapping
-    public void importCsvToDbJob() throws IOException {
+    public void importCsvToDbJob(@RequestParam(name = "file") MultipartFile file) throws IOException {
 
 
-        String filePath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
-        System.out.println(String.format("THIS IS A PATH %s",filePath));
 
+//        if(file.isEmpty() || file.getContentType() != "application/vnd.ms-excel"){
+//            throw new IllegalArgumentException("Invalid file content type");
+//        }
+
+        String fileName = file.getOriginalFilename();
+
+        String[] fileFormatFinder = fileName.split("\\.");
+
+        if(fileFormatFinder.length < 1){
+            throw new IllegalArgumentException("another error");
+        }
+
+        String fileFormat = '.' + fileFormatFinder[fileFormatFinder.length - 1];
+
+        if(!fileFormat.trim().equals(".xls") && !fileFormat.trim().equals(".xlsx")){
+            throw new IllegalArgumentException("filetype not accepted");
+        }
+
+          File tempFile = File.createTempFile("patient-file", fileFormat);
+        System.out.println("the temp file"+ tempFile.getAbsolutePath());
+          file.transferTo(tempFile);
+
+//        String filepath = new ClassPathResource("patient_dao_records.xls").getFile().getAbsolutePath(); // this can be done throught the
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("startAt", System.currentTimeMillis())
-                .addString("path", filePath)
+//                .addLong("timestamp", System.nanoTime())
+                .addString("path", tempFile.getAbsolutePath())
                 .toJobParameters();
 
         try {
